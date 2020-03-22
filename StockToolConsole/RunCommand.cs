@@ -35,15 +35,25 @@ namespace StockToolConsole
                 var symbol = Console.ReadLine();
                 var quote = await _quoteApiService.Get(symbol);
                 var monthlyTimeSeries = await _monthlyTimeSeriesApiService.Get(symbol);
-                //exclude current month from five year min
+                //exclude current month from five year min and average
+                var from = DateTime.Now.Date.AddMonths(-1).AddYears(-5);
+                var to = DateTime.Now.Date.AddMonths(-1);
+
                 var fiveYearMinimum = _statisticsService.Min(
                     monthlyTimeSeries: monthlyTimeSeries,
-                    from: DateTime.Now.Date.AddMonths(-1).AddYears(-5),
-                    to: DateTime.Now.Date.AddMonths(-1));
+                    from: from,
+                    to: to);
+
+                var fiveYearAverage = _statisticsService.Avg(
+                    monthlyTimeSeries: monthlyTimeSeries,
+                    from: from,
+                    to: to);
+
                 WriteLine("", ConsoleColor.Green);
                 WriteLine($"Symbol: {symbol}", ConsoleColor.Green);
                 WriteLine($"Price: {quote.Quote.Price}", ConsoleColor.Green);
                 WriteLine($"5 Year Min: {fiveYearMinimum}", ConsoleColor.Green);
+                WriteLine($"5 Year Avg: {fiveYearAverage}", ConsoleColor.Green);
 
                 WriteLine("", ConsoleColor.Green);
             }

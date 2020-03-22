@@ -7,30 +7,28 @@ namespace StockToolServices
 {
     public interface IStatisticsService
     {
-        double Min(MonthlyTimeSeriesApiModel monthlyTimeSeries);
         double Min(MonthlyTimeSeriesApiModel monthlyTimeSeries, DateTime from, DateTime to);
 
+        double Avg(MonthlyTimeSeriesApiModel monthlyTimeSeries, DateTime from, DateTime to);
     }
     public class StatisticsService : IStatisticsService
     {
-        
-        public double Min(MonthlyTimeSeriesApiModel monthlyTimeSeries)
+
+        public double Avg(MonthlyTimeSeriesApiModel monthlyTimeSeries, DateTime from, DateTime to)
         {
-            return Min(monthlyTimeSeries.MonthlyTimeSeries.Values.ToList());
+            return Filter(monthlyTimeSeries, from, to).Average(m => m.Close);
         }
 
         public double Min(MonthlyTimeSeriesApiModel monthlyTimeSeries, DateTime from, DateTime to)
         {
-
-            var filteredMonthlyTimeSeries = monthlyTimeSeries.MonthlyTimeSeries
+            return Filter(monthlyTimeSeries, from ,to).Min(m => m.Low); ;
+        }
+        
+        private List<MonthQuoteApiModel> Filter(MonthlyTimeSeriesApiModel monthlyTimeSeries, DateTime from, DateTime to)
+        {
+            return monthlyTimeSeries.MonthlyTimeSeries
                     .Where(m => DateTime.Parse(m.Key) >= from && DateTime.Parse(m.Key) <= to)
                     .Select(m => m.Value).ToList();
-
-            return Min(filteredMonthlyTimeSeries);
-        }
-        private double Min(List<MonthQuoteApiModel> monthQuotes)
-        {
-            return monthQuotes.Min(m => m.Low);
         }
     }
 }
