@@ -24,12 +24,8 @@ namespace StockToolConsole
             var runCommand = _serviceProvider.GetRequiredService<IRunCommand>();
             await runCommand.Execute();
         }
-        private static void WriteLine(string text, ConsoleColor color)
-        {
-            Console.ForegroundColor = color;
-            Console.WriteLine(text);
-        }
 
+        
         private static void ConfigureServices()
         {
             Configuration = new ConfigurationBuilder()
@@ -40,14 +36,23 @@ namespace StockToolConsole
 
             IServiceCollection services = new ServiceCollection();
             services.Configure<AlphaVantageAuthenticationOptions>(Configuration.GetSection("AlphaVantageAuthentication"));
-            services.AddHttpClient<IQuoteApiService, QuoteApiService>(
-                client => client.BaseAddress = new Uri(Configuration.GetValue<string>("ApiUrl")));
-            services.AddHttpClient<IMonthlyTimeSeriesApiService, MonthlyTimeSeriesApiService>(
-                client => client.BaseAddress = new Uri(Configuration.GetValue<string>("ApiUrl")));
+            services.RegisterHttpClient<IQuoteApiService, QuoteApiService>(Configuration);
+            services.RegisterHttpClient<IMonthlyTimeSeriesApiService, MonthlyTimeSeriesApiService>(Configuration);
+            services.RegisterHttpClient<IDailyTimeSeriesApiService, DailyTimeSeriesApiService>(Configuration);
             services.AddSingleton<IStatisticsService, StatisticsService>();
             services.AddSingleton<IRunCommand, RunCommand>();
 
             _serviceProvider = services.BuildServiceProvider();
+        }
+    }
+    public static class IServiceCollectionExtensions
+    {
+        public static void RegisterHttpClient<TInterface, TImplementation>(this IServiceCollection services, IConfiguration configuration)
+            where TInterface : class
+            where TImplementation : class, TInterface
+        {
+            services.AddHttpClient<TInterface, TImplementation>(
+                client => client.BaseAddress = new Uri(configuration.GetValue<string>("ApiUrl")));
         }
     }
 }
