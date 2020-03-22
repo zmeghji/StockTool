@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AlphaVantageClient.ApiServices
@@ -26,7 +27,8 @@ namespace AlphaVantageClient.ApiServices
 
         public async Task<T> Get(string stockSymbol)
         {
-
+            //Wait for 12 seconds to avoid exceeding 5 API calls per minute
+            Thread.Sleep(12000);
             var resp = await _httpClient.GetAsync(string.Format(_queryStringTemplate, stockSymbol, _authOptions.Value.ApiKey));
             var contentJsonString = await resp.Content.ReadAsStringAsync();
             return (JsonConvert.DeserializeObject<T>(contentJsonString));

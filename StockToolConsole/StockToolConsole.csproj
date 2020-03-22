@@ -29,6 +29,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AlphaVantageClient\AlphaVantageClient.csproj" />
+    <ProjectReference Include="..\Data\Data.csproj" />
     <ProjectReference Include="..\StockToolService\StockToolServices.csproj" />
   </ItemGroup>
 

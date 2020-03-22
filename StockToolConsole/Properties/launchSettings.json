@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "StockToolConsole": {
+      "commandName": "Project",
+      "commandLineArgs": "C:\\Test\\Input.csv 02-20-2020 03-04-2020"
+    }
+  }
+}

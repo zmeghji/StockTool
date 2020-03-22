@@ -1,5 +1,7 @@
 ﻿using AlphaVantageClient.ApiServices;
 using AlphaVantageClient.Configuration;
+using Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -21,8 +23,18 @@ namespace StockToolConsole
         {
 
             ConfigureServices();
-            var runCommand = _serviceProvider.GetRequiredService<IRunCommand>();
-            await runCommand.Execute();
+
+            if (args.Length == 0)
+            {
+                var runCommand = _serviceProvider.GetRequiredService<IRunInteractiveCommand>();
+                await runCommand.Execute();
+            }
+            else
+            {
+                await (_serviceProvider.GetRequiredService<StockReportContext>()).Database.EnsureCreatedAsync();
+                var runReportcommand = _serviceProvider.GetRequiredService<IRunReportCommand>();
+                await runReportcommand.Execute(args[0], DateTime.Parse(args[1]), DateTime.Parse(args[2]));
+            }
         }
 
         
@@ -40,8 +52,17 @@ namespace StockToolConsole
             services.RegisterHttpClient<IMonthlyTimeSeriesApiService, MonthlyTimeSeriesApiService>(Configuration);
             services.RegisterHttpClient<IDailyTimeSeriesApiService, DailyTimeSeriesApiService>(Configuration);
             services.AddSingleton<IStatisticsService, StatisticsService>();
-            services.AddSingleton<IRunCommand, RunCommand>();
+            services.AddSingleton<IYearlyStatsService, YearlyStatsService>();
 
+            services.AddSingleton<IRunInteractiveCommand, RunInteractiveCommand>();
+            services.AddSingleton<IRunReportCommand, RunReportCommand>();
+
+            services.AddDbContext<StockReportContext>(o => {
+                o.UseCosmos(
+                    Configuration.GetValue<string>("Database:CosmosServiceUrl"),
+                    Configuration.GetValue<string>("Database:CosmosAuthKey"),
+                    Configuration.GetValue<string>("Database:CosmosDatabaseId"));
+            });
             _serviceProvider = services.BuildServiceProvider();
         }
     }

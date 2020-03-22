@@ -8,29 +8,29 @@ using System.Threading.Tasks;
 namespace StockToolConsole
 {
 
-    public interface IRunCommand
+    public interface IRunInteractiveCommand
     {
         Task Execute();
     }
-    public class RunCommand : IRunCommand
+    public class RunInteractiveCommand : IRunInteractiveCommand
     {
         private readonly IQuoteApiService _quoteApiService;
-        private readonly IMonthlyTimeSeriesApiService _monthlyTimeSeriesApiService;
         private readonly IStatisticsService _statisticsService;
         private readonly IDailyTimeSeriesApiService _dailyTimeSeriesApiService;
+        private readonly IYearlyStatsService _yearlyStatsService;
         private DateTime firstEventStartDate;
         private DateTime secondEventStartDate;
 
-        public RunCommand(
+        public RunInteractiveCommand(
             IQuoteApiService quoteApiService, 
-            IMonthlyTimeSeriesApiService monthlyTimeSeriesApiService,
             IStatisticsService statisticsService,
-            IDailyTimeSeriesApiService dailyTimeSeriesApiService)
+            IDailyTimeSeriesApiService dailyTimeSeriesApiService,
+            IYearlyStatsService yearlyStatsService)
         {
             _quoteApiService = quoteApiService;
-            _monthlyTimeSeriesApiService = monthlyTimeSeriesApiService;
             _statisticsService = statisticsService;
             _dailyTimeSeriesApiService = dailyTimeSeriesApiService;
+            _yearlyStatsService = yearlyStatsService;
         }
         public async Task Execute()
         {
@@ -78,21 +78,10 @@ namespace StockToolConsole
         }
         private async Task PrintFiveYearStats(string symbol)
         {
-            var monthlyTimeSeries = await _monthlyTimeSeriesApiService.Get(symbol);
             //Five year period ends at the first event start date
-            var from = firstEventStartDate.AddYears(-5);
-            var to = firstEventStartDate;
-            var fiveYearMinimum = _statisticsService.Min(
-                monthlyTimeSeries: monthlyTimeSeries,
-                from: from,
-                to: to);
-
-            var fiveYearAverage = _statisticsService.Avg(
-                monthlyTimeSeries: monthlyTimeSeries,
-                from: from,
-                to: to);
-            WriteLine($"5 Year Min: {fiveYearMinimum}", ConsoleColor.Green);
-            WriteLine($"5 Year Avg: {fiveYearAverage}", ConsoleColor.Green);
+            var fiveYearStats = await _yearlyStatsService.GetMinAndAvg(symbol, firstEventStartDate, 5);
+            WriteLine($"5 Year Min: {fiveYearStats.Min}", ConsoleColor.Green);
+            WriteLine($"5 Year Avg: {fiveYearStats.Avg}", ConsoleColor.Green);
         }
     }
 }
